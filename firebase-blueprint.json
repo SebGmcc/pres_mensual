@@ -1,0 +1,319 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Private user account profile and onboarding status",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Firebase Auth user ID"
+        },
+        "email": {
+          "type": "string",
+          "maxLength": 160,
+          "description": "User email address"
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60,
+          "description": "User display name shown in the assistant and profile"
+        },
+        "onboardingCompleted": {
+          "type": "boolean",
+          "description": "Whether the user has completed initial monthly budget setup"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Account profile creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last profile update timestamp"
+        }
+      },
+      "required": [
+        "uid",
+        "email",
+        "displayName",
+        "onboardingCompleted",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "MonthBudget": {
+      "title": "MonthBudget",
+      "description": "Monthly budget configuration per user and month",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Owner Firebase Auth UID"
+        },
+        "monthId": {
+          "type": "string",
+          "enum": ["nov-2026", "oct-2026"],
+          "maxLength": 20,
+          "description": "Month identifier"
+        },
+        "monthlyBudget": {
+          "type": "number",
+          "description": "Assigned base monthly budget in COP"
+        },
+        "currentDay": {
+          "type": "number",
+          "description": "Active tracking day within the month"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update timestamp"
+        }
+      },
+      "required": [
+        "ownerId",
+        "monthId",
+        "monthlyBudget",
+        "currentDay",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Expense": {
+      "title": "Expense",
+      "description": "Individual user expense record",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Owner Firebase Auth UID"
+        },
+        "monthId": {
+          "type": "string",
+          "enum": ["nov-2026", "oct-2026"],
+          "maxLength": 20,
+          "description": "Month identifier"
+        },
+        "day": {
+          "type": "number",
+          "description": "Day of the month (1-31)"
+        },
+        "dateLabel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32,
+          "description": "Formatted display date label"
+        },
+        "shortDate": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20,
+          "description": "Short date label"
+        },
+        "time": {
+          "type": "string",
+          "maxLength": 10,
+          "pattern": "^\\d{2}:\\d{2}$",
+          "description": "Time in HH:MM format"
+        },
+        "categoryId": {
+          "type": "string",
+          "enum": [
+            "alimentacion",
+            "transporte",
+            "servicios",
+            "compras",
+            "entretenimiento"
+          ],
+          "maxLength": 24,
+          "description": "Expense category identifier"
+        },
+        "concept": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "description": "Expense description"
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 250,
+          "description": "Optional expense notes"
+        },
+        "amount": {
+          "type": "number",
+          "description": "Expense amount in COP"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update timestamp"
+        }
+      },
+      "required": [
+        "ownerId",
+        "monthId",
+        "day",
+        "dateLabel",
+        "shortDate",
+        "time",
+        "categoryId",
+        "concept",
+        "amount",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Income": {
+      "title": "Income",
+      "description": "Individual user income record",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Owner Firebase Auth UID"
+        },
+        "monthId": {
+          "type": "string",
+          "enum": ["nov-2026", "oct-2026"],
+          "maxLength": 20,
+          "description": "Month identifier"
+        },
+        "day": {
+          "type": "number",
+          "description": "Day of the month (1-31)"
+        },
+        "isoDate": {
+          "type": "string",
+          "maxLength": 12,
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+          "description": "ISO date YYYY-MM-DD"
+        },
+        "dateLabel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32,
+          "description": "Formatted display date label"
+        },
+        "shortDate": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20,
+          "description": "Short date label"
+        },
+        "time": {
+          "type": "string",
+          "maxLength": 10,
+          "pattern": "^\\d{2}:\\d{2}$",
+          "description": "Time in HH:MM format"
+        },
+        "incomeCategory": {
+          "type": "string",
+          "enum": [
+            "Salario",
+            "Trabajo independiente",
+            "Negocio",
+            "Inversiones",
+            "Regalo",
+            "Bonificación",
+            "Reembolso",
+            "Otro"
+          ],
+          "maxLength": 40,
+          "description": "Income category"
+        },
+        "paymentMethod": {
+          "type": "string",
+          "enum": [
+            "Efectivo",
+            "Cuenta bancaria",
+            "Nequi",
+            "Daviplata",
+            "Tarjeta",
+            "Otro"
+          ],
+          "maxLength": 32,
+          "description": "Payment method"
+        },
+        "concept": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "description": "Income description"
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 250,
+          "description": "Optional income notes"
+        },
+        "amount": {
+          "type": "number",
+          "description": "Income amount in COP"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update timestamp"
+        }
+      },
+      "required": [
+        "ownerId",
+        "monthId",
+        "day",
+        "isoDate",
+        "dateLabel",
+        "shortDate",
+        "time",
+        "incomeCategory",
+        "paymentMethod",
+        "concept",
+        "amount",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Private profile and onboarding status strictly owned by userId"
+    },
+    "/users/{userId}/months/{monthId}": {
+      "schema": { "$ref": "#/entities/MonthBudget" },
+      "description": "Per-user monthly budget documents"
+    },
+    "/users/{userId}/expenses/{expenseId}": {
+      "schema": { "$ref": "#/entities/Expense" },
+      "description": "Per-user expense records"
+    },
+    "/users/{userId}/incomes/{incomeId}": {
+      "schema": { "$ref": "#/entities/Income" },
+      "description": "Per-user income records"
+    }
+  }
+}

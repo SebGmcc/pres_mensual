@@ -1,0 +1,204 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net: Default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Primitive Helpers ---
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidMonthId(monthId) {
+      return monthId is string && monthId.size() <= 20 && monthId in ['nov-2026', 'oct-2026'];
+    }
+
+    function isValidCategoryId(cat) {
+      return cat is string && cat.size() <= 24 && cat in ['alimentacion', 'transporte', 'servicios', 'compras', 'entretenimiento'];
+    }
+
+    function isValidIncomeCategory(cat) {
+      return cat is string && cat.size() <= 40 && cat in ['Salario', 'Trabajo independiente', 'Negocio', 'Inversiones', 'Regalo', 'Bonificación', 'Reembolso', 'Otro'];
+    }
+
+    function isValidPaymentMethod(method) {
+      return method is string && method.size() <= 32 && method in ['Efectivo', 'Cuenta bancaria', 'Nequi', 'Daviplata', 'Tarjeta', 'Otro'];
+    }
+
+    // --- Validation Blueprints ---
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['uid', 'email', 'displayName', 'onboardingCompleted', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['uid', 'email', 'displayName', 'onboardingCompleted', 'createdAt', 'updatedAt'])
+        && isValidId(data.uid)
+        && data.uid == request.auth.uid
+        && data.email is string && data.email.size() <= 160
+        && data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 60
+        && data.onboardingCompleted is bool
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidMonthBudget(data) {
+      return data.keys().hasAll(['ownerId', 'monthId', 'monthlyBudget', 'currentDay', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['ownerId', 'monthId', 'monthlyBudget', 'currentDay', 'createdAt', 'updatedAt'])
+        && isValidId(data.ownerId)
+        && data.ownerId == request.auth.uid
+        && isValidMonthId(data.monthId)
+        && data.monthlyBudget is number && data.monthlyBudget >= 0 && data.monthlyBudget <= 1000000000
+        && data.currentDay is number && data.currentDay >= 1 && data.currentDay <= 31
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidExpense(data) {
+      return data.keys().hasAll(['ownerId', 'monthId', 'day', 'dateLabel', 'shortDate', 'time', 'categoryId', 'concept', 'amount', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['ownerId', 'monthId', 'day', 'dateLabel', 'shortDate', 'time', 'categoryId', 'concept', 'notes', 'amount', 'createdAt', 'updatedAt'])
+        && isValidId(data.ownerId)
+        && data.ownerId == request.auth.uid
+        && isValidMonthId(data.monthId)
+        && data.day is number && data.day >= 1 && data.day <= 31
+        && data.dateLabel is string && data.dateLabel.size() >= 1 && data.dateLabel.size() <= 32
+        && data.shortDate is string && data.shortDate.size() >= 1 && data.shortDate.size() <= 20
+        && data.time is string && data.time.size() <= 10 && data.time.matches('^\\d{2}:\\d{2}$')
+        && isValidCategoryId(data.categoryId)
+        && data.concept is string && data.concept.size() >= 1 && data.concept.size() <= 80
+        && (!('notes' in data) || (data.notes is string && data.notes.size() <= 250))
+        && data.amount is number && data.amount > 0 && data.amount <= 500000000
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidIncome(data) {
+      return data.keys().hasAll(['ownerId', 'monthId', 'day', 'isoDate', 'dateLabel', 'shortDate', 'time', 'incomeCategory', 'paymentMethod', 'concept', 'amount', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['ownerId', 'monthId', 'day', 'isoDate', 'dateLabel', 'shortDate', 'time', 'incomeCategory', 'paymentMethod', 'concept', 'notes', 'amount', 'createdAt', 'updatedAt'])
+        && isValidId(data.ownerId)
+        && data.ownerId == request.auth.uid
+        && isValidMonthId(data.monthId)
+        && data.day is number && data.day >= 1 && data.day <= 31
+        && data.isoDate is string && data.isoDate.size() <= 12 && data.isoDate.matches('^\\d{4}-\\d{2}-\\d{2}$')
+        && data.dateLabel is string && data.dateLabel.size() >= 1 && data.dateLabel.size() <= 32
+        && data.shortDate is string && data.shortDate.size() >= 1 && data.shortDate.size() <= 20
+        && data.time is string && data.time.size() <= 10 && data.time.matches('^\\d{2}:\\d{2}$')
+        && isValidIncomeCategory(data.incomeCategory)
+        && isValidPaymentMethod(data.paymentMethod)
+        && data.concept is string && data.concept.size() >= 1 && data.concept.size() <= 80
+        && (!('notes' in data) || (data.notes is string && data.notes.size() <= 250))
+        && data.amount is number && data.amount > 0 && data.amount <= 500000000
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // --- Collection Rules ---
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if false;
+      allow create: if isOwner(userId)
+        && isValidId(userId)
+        && isValidUserProfile(incoming())
+        && incoming().uid == userId
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isOwner(userId)
+        && isValidId(userId)
+        && isValidUserProfile(incoming())
+        && incoming().uid == existing().uid
+        && incoming().email == existing().email
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'onboardingCompleted', 'updatedAt']);
+      allow delete: if false;
+
+      match /months/{monthId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidMonthId(monthId);
+        allow list: if isOwner(userId) && resource.data.ownerId == request.auth.uid;
+        allow create: if isOwner(userId)
+          && isValidId(userId)
+          && isValidMonthId(monthId)
+          && isValidMonthBudget(incoming())
+          && incoming().monthId == monthId
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && (
+            exists(/databases/$(database)/documents/users/$(userId))
+            || existsAfter(/databases/$(database)/documents/users/$(userId))
+          );
+        allow update: if isOwner(userId)
+          && isValidId(userId)
+          && isValidMonthId(monthId)
+          && isValidMonthBudget(incoming())
+          && incoming().ownerId == existing().ownerId
+          && incoming().monthId == existing().monthId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly(['monthlyBudget', 'currentDay', 'updatedAt']);
+        allow delete: if false;
+      }
+
+      match /expenses/{expenseId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(expenseId);
+        allow list: if isOwner(userId) && resource.data.ownerId == request.auth.uid;
+        allow create: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(expenseId)
+          && isValidExpense(incoming())
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && exists(/databases/$(database)/documents/users/$(userId));
+        allow update: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(expenseId)
+          && isValidExpense(incoming())
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'monthId', 'day', 'dateLabel', 'shortDate', 'time',
+            'categoryId', 'concept', 'notes', 'amount', 'updatedAt'
+          ]);
+        allow delete: if isOwner(userId) && isValidId(userId) && isValidId(expenseId);
+      }
+
+      match /incomes/{incomeId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(incomeId);
+        allow list: if isOwner(userId) && resource.data.ownerId == request.auth.uid;
+        allow create: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(incomeId)
+          && isValidIncome(incoming())
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && exists(/databases/$(database)/documents/users/$(userId));
+        allow update: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(incomeId)
+          && isValidIncome(incoming())
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'monthId', 'day', 'isoDate', 'dateLabel', 'shortDate', 'time',
+            'incomeCategory', 'paymentMethod', 'concept', 'notes', 'amount', 'updatedAt'
+          ]);
+        allow delete: if isOwner(userId) && isValidId(userId) && isValidId(incomeId);
+      }
+    }
+  }
+}

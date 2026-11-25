@@ -1,0 +1,47 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    scroll-behavior: smooth;
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: #f4f7fb;
+    background-image:
+      radial-gradient(ellipse 65% 45% at 10% 95%, rgba(59, 130, 246, 0.08), transparent 70%),
+      radial-gradient(ellipse 50% 40% at 90% 5%, rgba(16, 185, 129, 0.06), transparent 70%);
+    background-attachment: fixed;
+  }
+
+  html.dark body {
+    background-color: #060a13;
+    background-image:
+      radial-gradient(ellipse 65% 45% at 10% 95%, rgba(29, 78, 216, 0.18), transparent 70%),
+      radial-gradient(ellipse 50% 40% at 90% 5%, rgba(16, 185, 129, 0.08), transparent 70%);
+  }
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Subtle dark scrollbar for horizontal filter strip */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
